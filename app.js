@@ -1,6 +1,6 @@
 "use strict"
 
-const boardSize = 19;
+const boardSize = 13;
 
 const board = document.createElement("div");
 board.className="board";
@@ -16,8 +16,8 @@ for(let i = 0; i < boardSize; i++){
     const square = document.createElement("div");
     square.className="square";
     let currentSquare = currentRow.appendChild(square);
-    // const piece = document.createElement("div");
-    // piece.className="piece";
-    // currentSquare.appendChild(piece);
+    const piece = document.createElement("div");
+    piece.className="piece";
+    currentSquare.appendChild(piece);
   }
 }
