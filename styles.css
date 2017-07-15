@@ -3,46 +3,19 @@
   padding: 0;
 }
 html{
-  /* Easily change the minimum square width by changing the default font size    */
-  font-size: 20px;
+    text-align: center;
 }
-body{
+#controlPanel{
+  background: beige;
+  width: 15em;
+  float: left;
+}
+#board{
   display: flex;
   justify-content: center;
-  align-items: center;
-  flex-direction: column;
-  min-width: 30rem;
 }
-.controlPanel{
-  text-align: center;
-}
-.board{
-  margin: 30px;
-  background: url("https://cdn.pixabay.com/photo/2016/12/26/13/47/fresno-1932211_960_720.jpg");
-  border: solid 1px;
-}
-.row{
-  background: #345;
-  clear: both;
-}
-.square{
-  width: 3vw;
-  height: 3vw;
-  min-width: 1rem;
-  min-height: 1rem;
-  border: solid 0.01rem;
-  float: left;
-  position: relative;
-}
-.piece{
-  border-radius: 50%; 
-  background: #000;
-  opacity: 0.3;
-  width: 2.5vw;
-  height: 2.5vw;
-  min-width: 1rem;
-  min-height: 1rem;
-  position: relative;
-  top: -0.9rem;
-  left: -0.9rem;
+canvas{
+  border: 1px solid black;
+  display: block;
+  background: beige;
 }
