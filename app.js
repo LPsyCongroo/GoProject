@@ -1,13 +1,44 @@
 "use strict"
 
-//Boilerplate
+/////////////////////////////////////////////////////////////VARIABLES////////////////////////////////
+
 const header = document.querySelector("header");
 const canvas = document.querySelector("canvas");
 const ctx = canvas.getContext('2d');
 
-/////////////////////////////////////////////////DRAW BOARD//////////////////////////////////////////////////////
+//varying size of the paying board, we will create a function to change board size
+const boardSize = 19; //default size
+let squareWidth; //we will calculate this in a function
+let stoneRadius; //we will calculate this in a function
 
-//Dynamic Canvas sizing
+//Create the board 2d array
+//this array will store our stones
+let board = [];
+for(let i = 0; i < boardSize; i++){
+  let column = []
+  for(let j = 0; j < boardSize; j++){
+    column.push(null);
+  }
+  board.push(column);
+}
+
+//STONE CONSTRUCTOR
+function Stone(x, y, color){
+  this.position = { x: x, y: y};
+  this.color = color;
+  this.neighbor = {top: null, right: null, left: null, bottom: null};
+}
+//STONE METHODS
+Stone.prototype.drawStone = function(){
+  ctx.beginPath();
+  //ctx.moveTo(this.position.x * squareWidth, this.position.y * squareWidth);
+  ctx.arc(this.position.x * squareWidth, this.position.y * squareWidth,stoneRadius,0, Math.PI * 2, false);
+  ctx.fillStyle = this.color;
+  ctx.fill();
+}
+
+/////////////////////////////////////////////////////////////////////FUNCTIONS//////////////////////////
+
 function resizeCanvas(){
   if(window.innerWidth > 600){
     canvas.width = window.innerWidth * 0.5;
@@ -16,44 +47,34 @@ function resizeCanvas(){
   }
   canvas.height = canvas.width;
 }
-resizeCanvas();  //initialize
-window.addEventListener('resize', resizeCanvas);  //update
-
-//Establish some variables
-const boards = {
-  "19x19":19,
-  "13x13":13,
-  "9x9":9
-} //varying size of the paying board, we will create a function to change board size
-let board = boards["19x19"]; //default size
-let squareWidth; //we will calculate this in a function
 
 function resizeSquare(){
-  squareWidth = canvas.width/(board+1); //Add 2 to the board for margin
-  drawBoard(); //we call draw board here
+  squareWidth = canvas.width/(boardSize+1); //Add 1 to the board for margin
 }
-resizeSquare(); //initialize
-window.addEventListener('resize', resizeSquare);
+
+function resizeStones(){
+  stoneRadius = squareWidth * 0.4;
+}
 
 function drawBoard(){
   ctx.beginPath();
   
   //Horizontal lines
-  for(let i = 0; i <= board; i++){
+  for(let i = 0; i <= boardSize; i++){
     ctx.moveTo(squareWidth, squareWidth + (squareWidth * i));
-    ctx.lineTo(squareWidth * (board), squareWidth + (squareWidth * i));
+    ctx.lineTo(squareWidth * (boardSize), squareWidth + (squareWidth * i));
   }
 
   //Vertical lines
-  for(let i = 0; i < board; i++){
+  for(let i = 0; i < boardSize; i++){
     ctx.moveTo(squareWidth + (squareWidth * i), squareWidth);
-    ctx.lineTo(squareWidth + (squareWidth * i), squareWidth * (board));
+    ctx.lineTo(squareWidth + (squareWidth * i), squareWidth * (boardSize));
   }
   ctx.stroke();
   ctx.closePath();
   
   //Make dots
-  if(board === 19){
+  if(boardSize === 19){
     function makeDot(x, y){
       ctx.beginPath();
       ctx.arc(x, y, 3, 0, Math.PI * 2, false);
@@ -68,38 +89,70 @@ function drawBoard(){
   }
 }
 
-///////////////////////////////////////////////////////GAME LOGIC///////////////////////////////
-
-let stoneRadius = squareWidth * 0.4; //initialize
-window.addEventListener('resize', function(){
-  stoneRadius = squareWidth * 0.4;
-}); //update
-
-function Stone(x, y, color){
-  this.position = { x: x, y: y};
-  this.color = color;
-  this.neighbor = {top: null, right: null, left: null, bottom: null};
+function drawStones(){
+  board.forEach(function(column) {
+    column.forEach(function(stone){
+      if(stone){
+        // console.log(stone);
+        stone.drawStone();}
+    }, this);
+  }, this);
 }
 
-Stone.prototype.drawStone = function(){
-  ctx.beginPath();
-  ctx.moveTo(this.position.x, this.position.y);
-  ctx.arc(this.position.x, this.position.y,stoneRadius,0, Math.PI * 2, false);
-  ctx.fillStyle = this.color;
-  ctx.fill();
+function clearBoard(){
+  ctx.clearRect(0,0,canvas.width, canvas.height);
 }
-//test
-let stones = []
-var myStone = new Stone(squareWidth, squareWidth);
-stones.push(myStone);
-myStone.drawStone();
 
-var hisStone = new Stone(squareWidth * 2, squareWidth, "white");
-hisStone.drawStone();
-stones.push(hisStone);
+function addStone(x, y, c){
+  // console.log(board[x-1][y-1] = new Stone(x,y,c));
+  board[x-1][y-1] = new Stone(x,y,c);
+  updateBoard();
+  return board[x-1][y-1];
+}
 
-window.addEventListener('resize',function(){
-  for(let i = 0; i < stones.length; i++){
-    stones[i].drawStone();
-  }
+function removeStone(x, y){
+  board[x-1][y-1] = null;
+  updateBoard();
+}
+
+const mouse = {
+  x:undefined,
+  y:undefined
+}
+
+canvas.addEventListener('mousemove',function(m){
+  mouse.x = m.x - canvas.getBoundingClientRect().left;
+  mouse.y = m.y - canvas.getBoundingClientRect().top;
+  hover();
 });
+
+function hover(){
+  let lowerBound =  0.5 * squareWidth;
+  let upperBound = squareWidth* (boardSize + 1) - lowerBound
+  if(mouse.x >= lowerBound && mouse.x <= upperBound && mouse.y >= lowerBound && mouse.y >= lowerBound && mouse.y <= upperBound){
+    //console.log(`${mouse.x} ${mouse.y}`);
+    let currentPos = addStone(Math.round(mouse.x/squareWidth), Math.round(mouse.y/squareWidth), 'rgba(0,0,0,0.6)');
+    if(Math.round(mouse.x/squareWidth) != currentPos.position.x || Math.round(mouse.y/squareWidth) != currentPos.position.y){
+      removeStone(currentPos.position.x, currentPos.position.y);
+    }
+    console.log(currentPos);
+  }
+}
+
+addStone(1,1,"black");
+addStone(1,2,"white");
+addStone(2,3);
+
+////////////////////////////////////////////////////////INITIALIZATION + UPDATE/////////////////////
+
+function updateBoard(){
+  resizeCanvas();
+  resizeSquare();
+  resizeStones();
+  clearBoard();
+  drawBoard();
+  drawStones();
+}
+updateBoard(); //initialize
+window.addEventListener('resize', updateBoard); //update
+

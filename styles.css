@@ -10,12 +10,12 @@ html{
   width: 15em;
   float: left;
 }
-#board{
+#game{
   display: flex;
   justify-content: center;
+  background: pink;
 }
 canvas{
-  border: 1px solid black;
   display: block;
-  background: beige;
+  background: goldenrod;
 }
