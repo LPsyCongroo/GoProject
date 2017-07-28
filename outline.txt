@@ -1,0 +1,48 @@
+Objects and Methods:
+
+    Game.Vars
+        black: Player
+        white: Player
+        currentTurn: black
+        board: Board
+    Game.Methods
+        initialize  //Create a board of whatever size
+        declareWinner
+
+    Player.Vars
+        color
+        score
+    Player.Methods
+        placeStone //toggle
+                    //if location has no stone Make new stone using player color and mouse position, Board.addStone(newStone)
+                    //if location has stone of player.color, remove stone   PROBLEM - NEW STONE VS OLD STONES
+        endTurn
+        pass
+        calculateScore
+        hover // create transparent stone under mouse
+
+    Board.Vars
+        size: 
+        stones: Array of stones 
+    Board.Methods
+        initializeStones //build out array according to size
+        renderBoard (clears board first!)
+        resizeBoard
+        addStone(stone)  //add to array
+        removeStone  //remove from array
+
+    Stone.Vars
+        x
+        y
+        color
+    Stone.Methods
+        renderStone
+
+    Mouse.Vars
+        x
+        y
+
+Events:
+
+    Mousemove: currentTurn.hover
+    OnClick: currentTurn.placeStone

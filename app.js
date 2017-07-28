@@ -1,80 +1,151 @@
 "use strict"
 
-/////////////////////////////////////////////////////////////VARIABLES////////////////////////////////
+////////////////////////////// Boilerplate ////////////////////////////////
 
 const header = document.querySelector("header");
 const canvas = document.querySelector("canvas");
 const ctx = canvas.getContext('2d');
+const mouse = { x:undefined, y:undefined };
 
-//varying size of the paying board, we will create a function to change board size
-const boardSize = 19; //default size
-let squareWidth; //we will calculate this in a function
-let stoneRadius; //we will calculate this in a function
-
-//Create the board 2d array
-//this array will store our stones
-let board = [];
-for(let i = 0; i < boardSize; i++){
-  let column = []
-  for(let j = 0; j < boardSize; j++){
-    column.push(null);
-  }
-  board.push(column);
-}
-
-//STONE CONSTRUCTOR
-function Stone(x, y, color){
-  this.position = { x: x, y: y};
-  this.color = color;
-  this.neighbor = {top: null, right: null, left: null, bottom: null};
-}
-//STONE METHODS
-Stone.prototype.drawStone = function(){
-  ctx.beginPath();
-  //ctx.moveTo(this.position.x * squareWidth, this.position.y * squareWidth);
-  ctx.arc(this.position.x * squareWidth, this.position.y * squareWidth,stoneRadius,0, Math.PI * 2, false);
-  ctx.fillStyle = this.color;
-  ctx.fill();
-}
-
-/////////////////////////////////////////////////////////////////////FUNCTIONS//////////////////////////
-
+//RESIZE CANVAS RESPONSIVELY  
 function resizeCanvas(){
-  if(window.innerWidth > 600){
-    canvas.width = window.innerWidth * 0.5;
+  let percentWindow = 0.5;  //What percent of the window width should the game board be 
+  let minWidth = 300;       //What should the minimum width of the game board be
+  if(window.innerWidth > minWidth/percentWindow){
+    canvas.width = window.innerWidth * percentWindow;
   }else{
-    canvas.width = 300;
+    canvas.width = minWidth;
   }
   canvas.height = canvas.width;
 }
 
-function resizeSquare(){
-  squareWidth = canvas.width/(boardSize+1); //Add 1 to the board for margin
+///////////////////////////// Object Constructors //////////////////////////////
+
+////////// Game Constructor ///////////
+
+function Game(pB, pW, b){
+  this.black = pB;
+  this.white = pW;
+  this.currentTurn = this.black;
+  this.board = b; 
 }
 
-function resizeStones(){
-  stoneRadius = squareWidth * 0.4;
+Game.prototype.endTurn = function(){
+  if(this.currentTurn.placedStone){
+    this.black.calcScore();
+    this.white.calcScore();
+    this.currentTurn.placedStone = null;
+    this.currentTurn = this.currentTurn === this.black ? this.white : this.black;
+
+    console.log(this.currentTurn.color + "'s turn!");
+
+  }
+};
+
+Game.prototype.declareWinner = function(){
+  if(this.black.score === this.white.score){
+    console.log("draw!");
+  }
+  else{
+    console.log(this.black.score > this.white.score ? "black" : "white");
+  }
+};
+
+////////// Player Constructor ///////////
+
+function Player(id, c){
+  this.ID = id;
+  this.color = c;
+  this.score = 0;
+  this.prisoners = 0;
+  this.placedStone = null;  //this could be set to null if a player passes
 }
 
-function drawBoard(){
+Player.prototype.placeStone = function(){
+  //Toggle a stone on or off
+  if(board.currentPoint() === null && this.placedStone === null){
+    this.placedStone = new Stone(mouse.x, mouse.y, this.color);
+    board.addStone(this.placedStone);
+  }
+  else if(board.currentPoint() === this.placedStone){
+    board.removeStone(this.placedStone);
+    this.placedStone = null;
+  }
+  renderBoard();
+};
+
+Player.prototype.calcScore = function(){
+  let territory = 0;
+  /**
+   * function for calculating territory
+   */
+  this.score = territory + this.prisoners;
+};
+
+Player.prototype.hover = function(){
+  // function for hovering during ones turn
+};
+
+////////// Board Constructor ///////////
+
+function Board(s){
+  this.size = s;
+  this.stones = (function(){
+    let b = [];
+    for(let i = 0; i < s; i++){
+      let column = []
+      for(let j = 0; j < s; j++){
+        column.push(null);
+      }
+      b.push(column);
+    }
+    return b;
+  this.squareWidth;
+  })();
+}
+
+Board.prototype.addStone = function(stone){
+  this.stones[stone.x][stone.y] = stone;
+}
+
+Board.prototype.removeStone = function(stone){
+  this.stones[stone.x][stone.y] = null;
+}
+
+Board.prototype.currentPoint = function(){
+  return this.stones[mouse.x][mouse.y];
+}
+
+Board.prototype.resize = function(){
+  //find the width of each square
+  this.squareWidth = canvas.width/(this.size + 1); //Add 1 to the board for margin around the grid
+  
+  Stone.prototype.radius = this.squareWidth * 0.4; //Set the size of each stone on the board
+}
+
+Board.prototype.render = function(){
+
+  // Ensure that we are not making multiple instances of objects everytime the board is rendered
+  ctx.clearRect(0,0,canvas.width, canvas.height); 
+
   ctx.beginPath();
   
   //Horizontal lines
-  for(let i = 0; i <= boardSize; i++){
-    ctx.moveTo(squareWidth, squareWidth + (squareWidth * i));
-    ctx.lineTo(squareWidth * (boardSize), squareWidth + (squareWidth * i));
+  for(let i = 0; i <= this.size; i++){
+    ctx.moveTo(this.squareWidth, this.squareWidth + (this.squareWidth * i));
+    ctx.lineTo(this.squareWidth * (this.size), this.squareWidth + (this.squareWidth * i));
   }
 
   //Vertical lines
-  for(let i = 0; i < boardSize; i++){
-    ctx.moveTo(squareWidth + (squareWidth * i), squareWidth);
-    ctx.lineTo(squareWidth + (squareWidth * i), squareWidth * (boardSize));
+  for(let i = 0; i < this.size; i++){
+    ctx.moveTo(this.squareWidth + (this.squareWidth * i), this.squareWidth);
+    ctx.lineTo(this.squareWidth + (this.squareWidth * i), this.squareWidth * (this.size));
   }
   ctx.stroke();
   ctx.closePath();
   
   //Make dots
-  if(boardSize === 19){
+  if(this.size === 19){
     function makeDot(x, y){
       ctx.beginPath();
       ctx.arc(x, y, 3, 0, Math.PI * 2, false);
@@ -83,76 +154,71 @@ function drawBoard(){
     }
     for(let i = 4; i<=16; i+=6){
       for(let j = 4; j<=16; j+=6){
-        makeDot(squareWidth*i, squareWidth*j)
+        makeDot(this.squareWidth*i, this.squareWidth*j)
       }
     }
   }
-}
 
-function drawStones(){
-  board.forEach(function(column) {
+  // render stones
+  this.stones.forEach(function(column) {
     column.forEach(function(stone){
       if(stone){
-        // console.log(stone);
-        stone.drawStone();}
+        stone.render();
+      }
     }, this);
   }, this);
-}
+};
 
-function clearBoard(){
-  ctx.clearRect(0,0,canvas.width, canvas.height);
-}
+////////// Stone Constructor ///////////
 
-function addStone(x, y, c){
-  // console.log(board[x-1][y-1] = new Stone(x,y,c));
-  board[x-1][y-1] = new Stone(x,y,c);
-  updateBoard();
-  return board[x-1][y-1];
-}
-
-function removeStone(x, y){
-  board[x-1][y-1] = null;
-  updateBoard();
-}
-
-const mouse = {
-  x:undefined,
-  y:undefined
-}
-
-canvas.addEventListener('mousemove',function(m){
-  mouse.x = m.x - canvas.getBoundingClientRect().left;
-  mouse.y = m.y - canvas.getBoundingClientRect().top;
-  hover();
-});
-
-function hover(){
-  let lowerBound =  0.5 * squareWidth;
-  let upperBound = squareWidth* (boardSize + 1) - lowerBound
-  if(mouse.x >= lowerBound && mouse.x <= upperBound && mouse.y >= lowerBound && mouse.y >= lowerBound && mouse.y <= upperBound){
-    //console.log(`${mouse.x} ${mouse.y}`);
-    let currentPos = addStone(Math.round(mouse.x/squareWidth), Math.round(mouse.y/squareWidth), 'rgba(0,0,0,0.6)');
-    if(Math.round(mouse.x/squareWidth) != currentPos.position.x || Math.round(mouse.y/squareWidth) != currentPos.position.y){
-      removeStone(currentPos.position.x, currentPos.position.y);
-    }
-    console.log(currentPos);
+function Stone(x, y, c){
+  this.x = x;
+  this.y = y;
+  this.color = c;
+  this.neighbor = {
+    top: null,
+    bottom: null,
+    left: null,
+    right: null
   }
 }
 
-addStone(1,1,"black");
-addStone(1,2,"white");
-addStone(2,3);
+Stone.prototype.radius = 0;
 
-////////////////////////////////////////////////////////INITIALIZATION + UPDATE/////////////////////
-
-function updateBoard(){
-  resizeCanvas();
-  resizeSquare();
-  resizeStones();
-  clearBoard();
-  drawBoard();
-  drawStones();
+Stone.prototype.getNeighbors = function(){
+  // Populate the neighbor object
 }
-updateBoard(); //initialize
-window.addEventListener('resize', updateBoard); //update
 
+Stone.prototype.render = function(){
+  ctx.beginPath();
+  ctx.arc(this.x * board.squareWidth, this.y * board.squareWidth, this.radius, 0 , Math.PI * 2, false);
+  ctx.fillStyle = this.color;
+  ctx.fill();
+}
+
+///////////////////////////// Initialization //////////////////////////////
+
+const game = new Game(new Player(0,"black"), new Player(1, "white"), new Board(19));
+const board = game.board;
+
+///////////////////////////// Event Listeners //////////////////////////////
+
+//place a stone
+canvas.addEventListener('click', function(){
+  game.currentTurn.placeStone();
+});
+
+//set the mouse positions to coordinates on the board.
+canvas.addEventListener('mousemove',function(m){
+  mouse.x = Math.round((m.x - canvas.getBoundingClientRect().left)/board.squareWidth);
+  mouse.y = Math.round((m.y - canvas.getBoundingClientRect().top)/board.squareWidth);
+});
+
+//resize and render board
+function renderBoard(){
+  resizeCanvas();
+  board.resize();
+  board.render();
+}
+renderBoard(); //initialize
+window.addEventListener('resize', renderBoard); //update
