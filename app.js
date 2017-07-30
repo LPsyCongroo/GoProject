@@ -3,6 +3,7 @@
 ////////////////////////////// Boilerplate ////////////////////////////////
 
 const header = document.querySelector("header");
+const endTurnBtn = document.querySelector("#endTurn");
 const canvas = document.querySelector("canvas");
 const ctx = canvas.getContext('2d');
 const mouse = { x:undefined, y:undefined };
@@ -58,7 +59,9 @@ function Player(id, c){
   this.color = c;
   this.score = 0;
   this.prisoners = 0;
-  this.placedStone = null;  //this could be set to null if a player passes
+  this.territory = 0;
+  this.placedStone = null;
+  this.hoverStone = null;
 }
 
 Player.prototype.placeStone = function(){
@@ -71,19 +74,21 @@ Player.prototype.placeStone = function(){
     board.removeStone(this.placedStone);
     this.placedStone = null;
   }
-  renderBoard();
 };
 
 Player.prototype.calcScore = function(){
-  let territory = 0;
-  /**
-   * function for calculating territory
-   */
   this.score = territory + this.prisoners;
 };
 
 Player.prototype.hover = function(){
-  // function for hovering during ones turn
+  
+  if(board.currentPoint !== this.hoverStone && board.currentPoint === null){
+    board.removeStone(this.hoverStone);
+    this.hoverStone = new Stone(mouse.x,  mouse.y, this.color === "black" ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.5)");
+    board.addStone(this.hoverStone);
+  }
+  
+  
 };
 
 ////////// Board Constructor ///////////
@@ -106,10 +111,36 @@ function Board(s){
 
 Board.prototype.addStone = function(stone){
   this.stones[stone.x][stone.y] = stone;
+  board.render();
 }
 
 Board.prototype.removeStone = function(stone){
   this.stones[stone.x][stone.y] = null;
+  board.render();
+}
+
+Board.prototype.captureStones = function(){
+  let topIsCutOff = false;
+  function neighbor(stone){
+    if(stone.top){
+      if(stone.top.color && stone.top.color === stone.color){
+        console.log("on top of " + stone + " is " + stone.top);
+        topIsCutOff = false;
+        neighbor(stone.top);
+      }
+      else {
+        console.log("on top of " + stone + " is the edge or the opposite color!");
+         
+      }
+    }
+  }
+  this.stones.forEach(function(column) {
+    column.forEach(function(stone){
+      if(stone){
+         
+      }
+    }, this);
+  }, this);
 }
 
 Board.prototype.currentPoint = function(){
@@ -149,6 +180,7 @@ Board.prototype.render = function(){
     function makeDot(x, y){
       ctx.beginPath();
       ctx.arc(x, y, 3, 0, Math.PI * 2, false);
+      ctx.fillStyle = "black";
       ctx.fill();
       ctx.closePath();
     }
@@ -159,11 +191,12 @@ Board.prototype.render = function(){
     }
   }
 
-  // render stones
+  // render stones and get their neigbors
   this.stones.forEach(function(column) {
     column.forEach(function(stone){
       if(stone){
         stone.render();
+        stone.getNeighbors(); //Update the neighbors of each stone
       }
     }, this);
   }, this);
@@ -187,11 +220,15 @@ Stone.prototype.radius = 0;
 
 Stone.prototype.getNeighbors = function(){
   // Populate the neighbor object
+  this.left = this.x - 1 > -1 ? board.stones[this.x - 1][this.y] : 'edge';
+  this.right = this.x + 1 < board.size ? board.stones[this.x + 1][this.y] : 'edge';
+  this.top = this.y - 1 > -1 ? board.stones[this.x][this.y - 1] : 'edge';
+  this.bottom = this.y + 1 <= board.size ? board.stones[this.x][this.y + 1] : 'edge';
 }
 
 Stone.prototype.render = function(){
   ctx.beginPath();
-  ctx.arc(this.x * board.squareWidth, this.y * board.squareWidth, this.radius, 0 , Math.PI * 2, false);
+  ctx.arc(this.x * board.squareWidth + board.squareWidth, this.y * board.squareWidth + board.squareWidth, this.radius, 0 , Math.PI * 2, false);
   ctx.fillStyle = this.color;
   ctx.fill();
 }
@@ -208,10 +245,14 @@ canvas.addEventListener('click', function(){
   game.currentTurn.placeStone();
 });
 
-//set the mouse positions to coordinates on the board.
+//mouse movement functions
 canvas.addEventListener('mousemove',function(m){
-  mouse.x = Math.round((m.x - canvas.getBoundingClientRect().left)/board.squareWidth);
-  mouse.y = Math.round((m.y - canvas.getBoundingClientRect().top)/board.squareWidth);
+  //update up mouse coordinates
+  mouse.x = Math.round((m.x - canvas.getBoundingClientRect().left)/board.squareWidth)-1;
+  mouse.y = Math.round((m.y - canvas.getBoundingClientRect().top)/board.squareWidth)-1;
+  console.log(mouse.x + " " + mouse.y);
+  // hover current player
+  game.currentTurn.hover();
 });
 
 //resize and render board
