@@ -1,6 +1,6 @@
 Objects and Methods:
 
-    Game.Vars
+    Game.Properties
         black: Player
         white: Player
         currentTurn: black
@@ -8,20 +8,36 @@ Objects and Methods:
     Game.Methods
         initialize  //Create a board of whatever size
         declareWinner
+        endTurn
+            change currentTurn
+            captureStones
+                go through currentTurn's stone and capture ones that are fully surrounded
+                add prisoner count of other player for each captured stone
 
-    Player.Vars
+    Player.Properties
         color
         score
+        dragons
     Player.Methods
         placeStone //toggle
                     //if location has no stone Make new stone using player color and mouse position, Board.addStone(newStone)
                     //if location has stone of player.color, remove stone   PROBLEM - NEW STONE VS OLD STONES
         endTurn
-        pass
         calculateScore
+                has all linked stones
+                recursive?
+                are all the neighbors opposite color?
+
+        getDragons
+            go through the board array until you hit your first colored stone.
+            give that stone an id of what dragon it is part of
+            add that stone to dragon array
+            find connected stones and give it the same id
+            add stone to dragon array if it is not already there (check by x and y coordinates)
+
         hover // create transparent stone under mouse
 
-    Board.Vars
+    Board.Properties
         size: 
         stones: Array of stones 
     Board.Methods
@@ -31,14 +47,14 @@ Objects and Methods:
         addStone(stone)  //add to array
         removeStone  //remove from array
 
-    Stone.Vars
+    Stone.Properties
         x
         y
         color
     Stone.Methods
         renderStone
 
-    Mouse.Vars
+    Mouse.Properties
         x
         y
 

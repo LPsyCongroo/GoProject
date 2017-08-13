@@ -188,3 +188,4 @@ function updateBoard(){
 updateBoard(); //initialize
 window.addEventListener('resize', updateBoard); //update
 
+
