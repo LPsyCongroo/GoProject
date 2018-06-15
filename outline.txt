@@ -62,3 +62,9 @@ Events:
 
     Mousemove: currentTurn.hover
     OnClick: currentTurn.placeStone
+
+
+for every stone
+    add to a new dragon
+    check neighbor
+        if right color and does not exist in dragons add to dragon

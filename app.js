@@ -130,13 +130,14 @@ Player.prototype.calcScore = function(){
 
 Player.prototype.getDragons = function(board){
   const player = this;
-  board.forEachPoint(function(stone){
+  function makeDragon(stone){
     if(stone){
       if(stone.color === player.color){
         
       }
     }
-  });
+  }
+  board.forEachPoint(makeDragon);
 };
 
 //////////////////////////////////////////////
